@@ -20,10 +20,19 @@ function loader(...args) {
         mapCallback(err);
         return;
       }
-      mapCallback(null, {
-        path: dep,
-        mtime: stats.mtime.getTime(),
+      fs.readFile(dep, 'utf-8', (err, content) => {
+        if (err) {
+          mapCallback(err);
+          return;
+        }
+
+        mapCallback(null, {
+          path: dep,
+          mtime: stats.mtime.getTime(),
+          hash: digest(content)
+        });
       });
+      
     });
   };
   async.parallel([
@@ -96,6 +105,19 @@ function pitch(remainingRequest, prevRequest, dataInput) {
       return;
     }
     async.each(cacheData.dependencies.concat(cacheData.contextDependencies), (dep, eachCallback) => {
+      fs.readFile(dep.path, 'utf-8', (err, content) => {
+        if (statErr) {
+          eachCallback(statErr);
+          return;
+        } 
+        if (digest(content) !== dep.hash) {
+          eachCallback(true);
+          return;
+        }
+
+        eachCallback();
+      });
+      /*
       fs.stat(dep.path, (statErr, stats) => {
         if (statErr) {
           eachCallback(statErr);
@@ -107,6 +129,7 @@ function pitch(remainingRequest, prevRequest, dataInput) {
         }
         eachCallback();
       });
+      */
     }, (err) => {
       if (err) {
         callback();
