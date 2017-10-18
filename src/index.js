@@ -29,10 +29,9 @@ function loader(...args) {
         mapCallback(null, {
           path: dep,
           mtime: stats.mtime.getTime(),
-          hash: digest(content)
+          hash: digest(content),
         });
       });
-      
     });
   };
   async.parallel([
@@ -106,10 +105,10 @@ function pitch(remainingRequest, prevRequest, dataInput) {
     }
     async.each(cacheData.dependencies.concat(cacheData.contextDependencies), (dep, eachCallback) => {
       fs.readFile(dep.path, 'utf-8', (err, content) => {
-        if (statErr) {
-          eachCallback(statErr);
+        if (err) {
+          eachCallback(err);
           return;
-        } 
+        }
         if (digest(content) !== dep.hash) {
           eachCallback(true);
           return;
